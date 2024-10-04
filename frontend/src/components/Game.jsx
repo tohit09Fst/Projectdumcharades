@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import styles from "./Game.module.css";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
 export default function Game() {
 
   const questions = [
@@ -60,8 +63,22 @@ export default function Game() {
   const navigate = useNavigate();
 
   const handleSubmit = () => {
-    if (userAnswer.trim().toLowerCase() === questions[currentQuestion].answer.toLowerCase()) {
+    if (!userAnswer.trim()) {
+      toast.warning("Please enter an answer before submitting!");
+      return;
+    }
+
+    const correctAnswer = questions[currentQuestion].answer.toLowerCase();
+    const userAnswerTrimmed = userAnswer.trim().toLowerCase();
+    const isLastHint = hintIndex === questions[currentQuestion].hints.length - 1;
+
+    if (userAnswerTrimmed === correctAnswer) {
+      toast.success("Correct Answer!");
       setScore((prevScore) => prevScore + 1);
+    } else if (!isLastHint) {
+      toast.error("Wrong Answer. Here's another hint!");
+      setHintIndex(hintIndex + 1);
+      return;
     }
 
     if (currentQuestion < questions.length - 1) {
@@ -69,19 +86,10 @@ export default function Game() {
       setHintIndex(0);
       setUserAnswer("");
     } else {
-      // Save the final score after answering the last question
-      localStorage.setItem("score", score + 1); // Store final score
-      localStorage.setItem("user", "Player"); // Store user name (or replace with actual username)
-      setGameOver(true); // End the game
-      navigate("/greet"); // Navigate to the GreetingCard component
-    }
-  };
-
-  const showNextHint = () => {
-    if (hintIndex < questions[currentQuestion].hints.length - 1) {
-      setHintIndex(hintIndex + 1);
-    } else {
-      setHintIndex(0);
+      localStorage.setItem("score", score + 1); 
+      localStorage.setItem("user", "Player"); 
+      setGameOver(true); 
+      navigate("/greet"); 
     }
   };
 
@@ -96,33 +104,31 @@ export default function Game() {
 
   return (
     <div className={styles.game}>
-    <div className={styles.card}>
-      <h2 className={styles.question}>Dumb Charades Game</h2>
-      <p className={styles.question}>
-        Question {currentQuestion + 1}: {questions[currentQuestion].question}
-      </p>
-      <p className={styles.hint}>
-        Hint: {questions[currentQuestion].hints[hintIndex]}
-      </p>
-      <button className={styles.button} onClick={showNextHint}>
-        Show Next Hint
-      </button>
+      <ToastContainer />
+      <div className={styles.card}>
+        <h2 className={styles.question}>Dumb Charades Game</h2>
+        <p className={styles.question}>
+          Question {currentQuestion + 1}: {questions[currentQuestion].question}
+        </p>
+        <p className={styles.hint}>
+          Hint: {questions[currentQuestion].hints[hintIndex]}
+        </p>
 
-      <div>
-        <input
-          type="text"
-          className={styles.inputField}
-          placeholder="Enter answer"
-          value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
-        />
-        <button className={styles.button} onClick={handleSubmit}>
-          Submit Answer
-        </button>
+        <div>
+          <input
+            type="text"
+            className={styles.inputField}
+            placeholder="Enter answer"
+            value={userAnswer}
+            onChange={(e) => setUserAnswer(e.target.value)}
+          />
+          <button className={styles.button} onClick={handleSubmit}>
+            Submit Answer
+          </button>
+        </div>
+
+        <p className={styles.score}>Your Score: {score}</p>
       </div>
-
-      <p className={styles.score}>Your Score: {score}</p>
-    </div>
     </div>
   );
 }
